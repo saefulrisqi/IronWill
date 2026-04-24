@@ -1,12 +1,10 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
-
 from models import User, Skill, Quest, QuestLog, ShopItem, Inventory
 
-
 REWARD_TABLE = {
-    1: {"exp": 5, "gold": 3},
+    1: {"exp": 5,  "gold": 3},
     2: {"exp": 10, "gold": 5},
     3: {"exp": 20, "gold": 10},
     4: {"exp": 35, "gold": 18},
@@ -38,7 +36,13 @@ def get_quest(db: Session, quest_id: int, user_id: int) -> Quest | None:
     )
 
 
-def create_quest(db: Session, user_id: int, title: str, difficulty: int, target_skill_id: int | None = None) -> Quest:
+def create_quest(
+    db: Session,
+    user_id: int,
+    title: str,
+    difficulty: int,
+    target_skill_id: int | None = None
+) -> Quest:
     db_quest = Quest(
         user_id=user_id,
         title=title,
@@ -53,7 +57,6 @@ def create_quest(db: Session, user_id: int, title: str, difficulty: int, target_
 
 def complete_quest(db: Session, user_id: int, quest_id: int) -> dict:
     quest = get_quest(db, quest_id, user_id)
-
     if quest is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -65,7 +68,6 @@ def complete_quest(db: Session, user_id: int, quest_id: int) -> dict:
         .filter(QuestLog.quest_id == quest_id, QuestLog.status == "completed")
         .first()
     )
-
     if already_completed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -86,28 +88,35 @@ def complete_quest(db: Session, user_id: int, quest_id: int) -> dict:
             detail="User not found",
         )
 
-    user.total_exp += reward["exp"]
-    user.total_gold += reward["gold"]
+    try:
+        user.total_exp += reward["exp"]
+        user.total_gold += reward["gold"]
 
-    new_level = _calculate_level(user.total_exp)
-    if new_level > user.level:
-        user.level = new_level
+        new_level = _calculate_level(user.total_exp)
+        if new_level > user.level:
+            user.level = new_level
 
-    if quest.target_skill_id is not None:
-        skill = (
-            db.query(Skill)
-            .filter(Skill.id == quest.target_skill_id, Skill.user_id == user_id)
-            .first()
+        if quest.target_skill_id is not None:
+            skill = (
+                db.query(Skill)
+                .filter(Skill.id == quest.target_skill_id, Skill.user_id == user_id)
+                .first()
+            )
+            if skill is not None:
+                skill.exp += reward["exp"]
+                skill.level = _calculate_level(skill.exp)
+
+        quest_log = QuestLog(quest_id=quest_id, status="completed")
+        db.add(quest_log)
+        db.commit()
+        db.refresh(quest_log)
+
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to complete quest, transaction rolled back",
         )
-
-        if skill is not None:
-            skill.exp += reward["exp"]
-            skill.level = _calculate_level(skill.exp)
-
-    quest_log = QuestLog(quest_id=quest_id, status="completed")
-    db.add(quest_log)
-    db.commit()
-    db.refresh(quest_log)
 
     return {
         "quest_id": quest_id,
@@ -123,12 +132,10 @@ def complete_quest(db: Session, user_id: int, quest_id: int) -> dict:
 def _calculate_level(total_exp: int) -> int:
     level = 1
     exp_needed = 100
-
     while total_exp >= exp_needed:
         total_exp -= exp_needed
         level += 1
         exp_needed = int(exp_needed * 1.2)
-
     return level
 
 
@@ -136,7 +143,12 @@ def get_user_skills(db: Session, user_id: int):
     return db.query(Skill).filter(Skill.user_id == user_id).all()
 
 
-def create_skill(db: Session, user_id: int, name: str, parent_skill_id: int | None = None) -> Skill:
+def create_skill(
+    db: Session,
+    user_id: int,
+    name: str,
+    parent_skill_id: int | None = None
+) -> Skill:
     if parent_skill_id is not None:
         parent = (
             db.query(Skill)
@@ -200,5 +212,5 @@ def buy_item(db: Session, user_id: int, item_id: int) -> Inventory:
     user.total_gold -= item.price_gold
     db.commit()
     db.refresh(inventory_entry)
-
+    db.refresh(user)
     return inventory_entry
