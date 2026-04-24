@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from database import get_db
-from models import User, Inventory, ShopItem
-from routers.auth import get_current_user
+from ..database import get_db
+from ..models import User, Inventory, ShopItem
+from .auth import get_current_user
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
 
@@ -19,7 +19,6 @@ def list_user_inventory(
         .filter(Inventory.user_id == current_user.id)
         .all()
     )
-
     return [
         {
             "inventory_id": inv.id,

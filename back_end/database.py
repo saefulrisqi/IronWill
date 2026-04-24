@@ -1,17 +1,17 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 import os
-from dotenv import load_dotenv  
+from dotenv import load_dotenv
+
 load_dotenv()
 
-DATABASE_HBT = os.getenv(
-    "DATABASE_HBT",
-    "postgresql://habit_admin:rahasia123@localhost:5432/habit_db" 
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://habit_admin:rahasia123@localhost:5432/habit_db"
 )
 
 engine = create_engine(
-    DATABASE_HBT,
+    DATABASE_URL,
     pool_pre_ping=True,
     pool_recycle=300
 )
@@ -22,7 +22,8 @@ SessionLocal = sessionmaker(
     bind=engine
 )
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
 def get_db():
     db = SessionLocal()

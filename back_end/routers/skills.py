@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from database import get_db
-from models import User
-from schemas import SkillCreate, SkillResponse
-from crud import create_skill, get_user_skills
-from routers.auth import get_current_user
+from ..database import get_db
+from ..models import User
+from ..schemas import SkillCreate, SkillResponse
+from ..crud import create_skill, get_user_skills
+from .auth import get_current_user
 
 router = APIRouter(prefix="/skills", tags=["skills"])
 
