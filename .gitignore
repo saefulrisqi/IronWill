@@ -1,0 +1,48 @@
+# =========================
+# PYTHON & DJANGO
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# =========================
+# LINGKUNGAN VIRTUAL (SANGAT PENTING!)
+# =========================
+venv/
+env/
+ENV/
+
+# =========================
+# KREDENSIAL & RAHASIA (SANGAT PENTING!)
+# =========================
+.env
+.env.local
+.env.*
+.sh
+
+# =========================
+# FRONTEND (TAILWIND CSS)
+# =========================
+theme/static_src/node_modules/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# EDITOR (VS CODE)
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# SISTEM OPERASI
+# =========================
+.DS_Store
+Thumbs.db
