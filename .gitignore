@@ -22,7 +22,6 @@ ENV/
 .env
 .env.local
 .env.*
-.sh
 
 # =========================
 # FRONTEND (TAILWIND CSS)
